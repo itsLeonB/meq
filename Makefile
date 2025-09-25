@@ -1,4 +1,15 @@
-.PHONY: help lint test-all test-verbose test-coverage test-coverage-html test-clean install-pre-push-hook uninstall-pre-push-hook
+TEST_DIR := ./test
+
+.PHONY:
+	help
+	lint
+	test
+	test-verbose
+	test-coverage
+	test-coverage-html
+	test-clean
+	install-pre-push-hook
+	uninstall-pre-push-hook
 
 help:
 	@echo "Available commands:"
@@ -15,27 +26,47 @@ help:
 lint:
 	golangci-lint run ./...
 
-test-all:
+test:
 	@echo "Running all tests..."
-	go test ./test/...
+	@if [ -d $(TEST_DIR) ]; then \
+		go test $(TEST_DIR)/...; \
+	else \
+		echo "No tests found in $(TEST_DIR), skipping."; \
+	fi
 
 test-verbose:
 	@echo "Running all tests with verbose output..."
-	go test -v ./test/...
+	@if [ -d $(TEST_DIR) ]; then \
+		go test -v $(TEST_DIR)/...; \
+	else \
+		echo "No tests found in $(TEST_DIR), skipping."; \
+	fi
 
 test-coverage:
 	@echo "Running all tests with coverage report..."
-	go test -v -cover -coverprofile=coverage.out -coverpkg=./... ./test/...
+	@if [ -d $(TEST_DIR) ]; then \
+		go test -v -cover -coverprofile=coverage.out -coverpkg=./internal/... $(TEST_DIR)/...; \
+	else \
+		echo "No tests found in $(TEST_DIR), skipping."; \
+	fi
 
 test-coverage-html:
 	@echo "Running all tests and generating HTML coverage report..."
-	go test -v -cover -coverprofile=coverage.out -coverpkg=./... ./test/...
-	go tool cover -html=coverage.out -o coverage.html
-	@echo "Coverage report generated: coverage.html"
+	@if [ -d $(TEST_DIR) ]; then \
+		go test -v -cover -coverprofile=coverage.out -coverpkg=./internal/... $(TEST_DIR)/... && \
+		go tool cover -html=coverage.out -o coverage.html && \
+		echo "Coverage report generated: coverage.html"; \
+	else \
+		echo "No tests found in $(TEST_DIR), skipping."; \
+	fi
 
 test-clean:
 	@echo "Cleaning test cache and running tests..."
-	go clean -testcache && go test -v ./test/...
+	@if [ -d $(TEST_DIR) ]; then \
+		go clean -testcache && go test -v $(TEST_DIR)/...; \
+	else \
+		echo "No tests found in $(TEST_DIR), skipping."; \
+	fi
 
 install-pre-push-hook:
 	@echo "Installing pre-push git hook..."
