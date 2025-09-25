@@ -13,15 +13,15 @@ TEST_DIR := ./test
 
 help:
 	@echo "Available commands:"
-	@echo "  help                         - Show this help message"
-	@echo "  lint                         - Run golangci-lint on the codebase"
-	@echo "  test-all                     - Run all tests"
-	@echo "  test-verbose                 - Run all tests with verbose output"
-	@echo "  test-coverage                - Run all tests with coverage report"
-	@echo "  test-coverage-html           - Run all tests and generate HTML coverage report"
-	@echo "  test-clean                   - Clean test cache and run tests"
-	@echo "  make install-pre-push-hook   - Install the pre-push git hook"
-	@echo "  make uninstall-pre-push-hook - Uninstall the pre-push git hook"
+	@echo "  help                    - Show this help message"
+	@echo "  lint                    - Run golangci-lint on the codebase"
+	@echo "  test                    - Run all tests"
+	@echo "  test-verbose            - Run all tests with verbose output"
+	@echo "  test-coverage           - Run all tests with coverage report"
+	@echo "  test-coverage-html      - Run all tests and generate HTML coverage report"
+	@echo "  test-clean              - Clean test cache and run tests"
+	@echo "  install-pre-push-hook   - Install the pre-push git hook"
+	@echo "  uninstall-pre-push-hook - Uninstall the pre-push git hook"
 
 lint:
 	golangci-lint run ./...

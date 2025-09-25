@@ -2,8 +2,8 @@ package meq
 
 import (
 	"context"
+	"fmt"
 
-	"github.com/hibiken/asynq"
 	"github.com/itsLeonB/ezutil/v2"
 	"github.com/itsLeonB/meq/internal"
 	"github.com/itsLeonB/meq/task"
@@ -15,14 +15,11 @@ type TaskQueue[T task.Message] interface {
 	DeleteAll(ctx context.Context) error
 }
 
-func NewAsynqTaskQueue[T task.Message](
-	logger ezutil.Logger,
-	client *asynq.Client,
-	inspector *asynq.Inspector,
-) TaskQueue[T] {
-	return internal.NewAsynqTaskQueue[T](
-		logger,
-		client,
-		inspector,
-	)
+func NewTaskQueue[T task.Message](logger ezutil.Logger, db DB) TaskQueue[T] {
+	switch d := db.(type) {
+	case *internal.AsynqDB:
+		return internal.NewAsynqTaskQueue[T](logger, d)
+	default:
+		panic(fmt.Sprintf("unsupported db type: %T", d))
+	}
 }

@@ -16,25 +16,19 @@ type AsynqTaskQueue[T task.Message] struct {
 	inspector *asynq.Inspector
 }
 
-func NewAsynqTaskQueue[T task.Message](
-	logger ezutil.Logger,
-	client *asynq.Client,
-	inspector *asynq.Inspector,
-) *AsynqTaskQueue[T] {
+func NewAsynqTaskQueue[T task.Message](logger ezutil.Logger, db *AsynqDB) *AsynqTaskQueue[T] {
 	if logger == nil {
 		panic("logger cannot be nil")
 	}
-	if client == nil {
-		panic("client cannot be nil")
+
+	tq := &AsynqTaskQueue[T]{}
+
+	if db != nil {
+		tq.client = db.Client
+		tq.inspector = db.Inspector
 	}
-	if inspector == nil {
-		panic("inspector cannot be nil")
-	}
-	return &AsynqTaskQueue[T]{
-		logger,
-		client,
-		inspector,
-	}
+
+	return tq
 }
 
 func (tq *AsynqTaskQueue[T]) Enqueue(ctx context.Context, source string, message T) error {
