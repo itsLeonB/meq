@@ -1,16 +1,15 @@
 TEST_DIR := ./test
 TEST_PKG := ./...
 
-.PHONY:
-	help
-	lint
-	test
-	test-verbose
-	test-coverage
-	test-coverage-html
-	test-clean
-	install-pre-push-hook
-	uninstall-pre-push-hook
+.PHONY: help \
+lint \
+test \
+test-verbose \
+test-coverage \
+test-coverage-html \
+test-clean \
+install-pre-push-hook \
+uninstall-pre-push-hook
 
 help:
 	@echo "Available commands:"
