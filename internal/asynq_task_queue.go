@@ -14,6 +14,7 @@ type AsynqTaskQueue[T task.Message] struct {
 	logger    ezutil.Logger
 	client    *asynq.Client
 	inspector *asynq.Inspector
+	queueName string
 }
 
 func NewAsynqTaskQueue[T task.Message](logger ezutil.Logger, db *AsynqDB) *AsynqTaskQueue[T] {
@@ -21,7 +22,12 @@ func NewAsynqTaskQueue[T task.Message](logger ezutil.Logger, db *AsynqDB) *Asynq
 		panic("logger cannot be nil")
 	}
 
-	tq := &AsynqTaskQueue[T]{logger: logger}
+	var msg T
+
+	tq := &AsynqTaskQueue[T]{
+		logger:    logger,
+		queueName: msg.Type(),
+	}
 
 	if db != nil {
 		tq.client = db.Client
@@ -52,7 +58,7 @@ func (tq *AsynqTaskQueue[T]) Enqueue(ctx context.Context, source string, message
 }
 
 func (tq *AsynqTaskQueue[T]) GetAllPending(ctx context.Context) ([]task.Task[T], error) {
-	pendingTasks, err := tq.inspector.ListPendingTasks(tq.taskType(), asynq.PageSize(1000))
+	pendingTasks, err := tq.inspector.ListPendingTasks(tq.queueName, asynq.PageSize(1000))
 	if err != nil {
 		return nil, eris.Wrap(err, "error listing pending tasks")
 	}
@@ -60,15 +66,10 @@ func (tq *AsynqTaskQueue[T]) GetAllPending(ctx context.Context) ([]task.Task[T],
 }
 
 func (tq *AsynqTaskQueue[T]) DeleteAll(ctx context.Context) error {
-	if err := tq.inspector.DeleteQueue(tq.taskType(), true); err != nil {
+	if err := tq.inspector.DeleteQueue(tq.queueName, true); err != nil {
 		return eris.Wrap(err, "error deleting queue")
 	}
 	return nil
-}
-
-func (tq *AsynqTaskQueue[T]) taskType() string {
-	var msg T
-	return msg.Type()
 }
 
 func (tq *AsynqTaskQueue[T]) mapToTask(taskInfo *asynq.TaskInfo) (task.Task[T], error) {
