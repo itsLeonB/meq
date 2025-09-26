@@ -21,7 +21,7 @@ func NewAsynqTaskQueue[T task.Message](logger ezutil.Logger, db *AsynqDB) *Asynq
 		panic("logger cannot be nil")
 	}
 
-	tq := &AsynqTaskQueue[T]{}
+	tq := &AsynqTaskQueue[T]{logger: logger}
 
 	if db != nil {
 		tq.client = db.Client
@@ -46,7 +46,7 @@ func (tq *AsynqTaskQueue[T]) Enqueue(ctx context.Context, source string, message
 		return eris.Wrap(err, "error enqueuing task")
 	}
 
-	tq.logger.Infof("enqueued task: BatchID=%s, Queue=%s", info.ID, info.Queue)
+	tq.logger.Infof("enqueued task: ID=%s, Queue=%s", info.ID, info.Queue)
 
 	return nil
 }

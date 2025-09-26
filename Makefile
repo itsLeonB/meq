@@ -1,4 +1,5 @@
 TEST_DIR := ./test
+TEST_PKG := ./...
 
 .PHONY:
 	help
@@ -45,7 +46,7 @@ test-verbose:
 test-coverage:
 	@echo "Running all tests with coverage report..."
 	@if [ -d $(TEST_DIR) ]; then \
-		go test -v -cover -coverprofile=coverage.out -coverpkg=./internal/... $(TEST_DIR)/...; \
+		go test -v -cover -coverprofile=coverage.out -coverpkg=$(TEST_PKG) $(TEST_DIR)/...; \
 	else \
 		echo "No tests found in $(TEST_DIR), skipping."; \
 	fi
@@ -53,7 +54,7 @@ test-coverage:
 test-coverage-html:
 	@echo "Running all tests and generating HTML coverage report..."
 	@if [ -d $(TEST_DIR) ]; then \
-		go test -v -cover -coverprofile=coverage.out -coverpkg=./internal/... $(TEST_DIR)/... && \
+		go test -v -cover -coverprofile=coverage.out -coverpkg=$(TEST_PKG) $(TEST_DIR)/... && \
 		go tool cover -html=coverage.out -o coverage.html && \
 		echo "Coverage report generated: coverage.html"; \
 	else \
