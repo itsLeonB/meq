@@ -72,6 +72,31 @@ func (tq *AsynqTaskQueue[T]) DeleteAll(ctx context.Context) error {
 	return nil
 }
 
+func (tq *AsynqTaskQueue[T]) GetOldest(ctx context.Context) (task.Task[T], string, error) {
+	tasks, err := tq.inspector.ListPendingTasks(tq.queueName, asynq.PageSize(1))
+	if err != nil {
+		return task.Task[T]{}, "", eris.Wrap(err, "error listing pending tasks")
+	}
+
+	if len(tasks) < 1 {
+		return task.Task[T]{}, "", nil
+	}
+
+	msg, err := tq.mapToTask(tasks[0])
+	if err != nil {
+		return task.Task[T]{}, "", err
+	}
+
+	return msg, tasks[0].ID, nil
+}
+
+func (tq *AsynqTaskQueue[T]) Delete(ctx context.Context, id string) error {
+	if err := tq.inspector.DeleteTask(tq.queueName, id); err != nil {
+		return eris.Wrapf(err, "error deleting task id %s", id)
+	}
+	return nil
+}
+
 func (tq *AsynqTaskQueue[T]) mapToTask(taskInfo *asynq.TaskInfo) (task.Task[T], error) {
 	if taskInfo == nil {
 		return task.Task[T]{}, eris.New("task info is nil")
