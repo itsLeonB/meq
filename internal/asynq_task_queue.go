@@ -82,6 +82,10 @@ func (tq *AsynqTaskQueue[T]) GetOldest(ctx context.Context) (task.Task[T], strin
 		return task.Task[T]{}, "", eris.Wrap(err, "error listing pending tasks")
 	}
 
+	if len(tasks) < 1 {
+		return task.Task[T]{}, "", nil
+	}
+
 	// The last task on the last page is the oldest
 	oldestTask := tasks[0]
 
