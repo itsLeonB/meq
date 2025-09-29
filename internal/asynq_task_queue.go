@@ -94,6 +94,9 @@ func (tq *AsynqTaskQueue[T]) GetOldest(ctx context.Context) (task.Task[T], strin
 }
 
 func (tq *AsynqTaskQueue[T]) Delete(ctx context.Context, id string) error {
+	if id == "" {
+		return eris.New("id is empty")
+	}
 	if err := tq.inspector.DeleteTask(tq.queueName, id); err != nil {
 		return eris.Wrapf(err, "error deleting task id %s", id)
 	}
