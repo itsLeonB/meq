@@ -73,35 +73,17 @@ func (tq *AsynqTaskQueue[T]) DeleteAll(ctx context.Context) error {
 }
 
 func (tq *AsynqTaskQueue[T]) GetOldest(ctx context.Context) (task.Task[T], string, error) {
-	// First, get queue info to know total count
-	qinfo, err := tq.inspector.GetQueueInfo(tq.queueName)
-	if err != nil {
-		return task.Task[T]{}, "", eris.Wrap(err, "error getting queue info")
-	}
-
-	if qinfo.Pending < 1 {
-		return task.Task[T]{}, "", nil
-	}
-
-	// Step 2: Calculate the last page (where oldest task is)
-	lastPage := int(qinfo.Pending) - 1
-
-	// Get the last page
-	tasks, err := tq.inspector.ListPendingTasks(
-		tq.queueName,
+	tasks, err := tq.inspector.ListPendingTasks(tq.queueName,
 		asynq.PageSize(1),
-		asynq.Page(lastPage),
+		asynq.Page(1),
 	)
+
 	if err != nil {
 		return task.Task[T]{}, "", eris.Wrap(err, "error listing pending tasks")
 	}
 
-	if len(tasks) < 1 {
-		return task.Task[T]{}, "", eris.New("no pending tasks found")
-	}
-
 	// The last task on the last page is the oldest
-	oldestTask := tasks[len(tasks)-1]
+	oldestTask := tasks[0]
 
 	msg, err := tq.mapToTask(oldestTask)
 	if err != nil {
