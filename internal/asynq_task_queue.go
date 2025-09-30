@@ -122,7 +122,11 @@ func (tq *AsynqTaskQueue[T]) ProcessAndAckOldest(ctx context.Context, fn func(co
 	if err = fn(ctx, task.Message); err != nil {
 		return err
 	}
-	return tq.Delete(ctx, taskID)
+	if err = tq.Delete(ctx, taskID); err != nil {
+		return err
+	}
+	tq.logger.Infof("processed and deleted task: ID=%s, Queue=%s", taskID, tq.queueName)
+	return nil
 }
 
 func (tq *AsynqTaskQueue[T]) mapToTask(taskInfo *asynq.TaskInfo) (task.Task[T], error) {
