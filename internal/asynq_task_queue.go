@@ -107,6 +107,24 @@ func (tq *AsynqTaskQueue[T]) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
+func (tq *AsynqTaskQueue[T]) ProcessAndAckOldest(ctx context.Context, fn func(context.Context, T) error) error {
+	if fn == nil {
+		return eris.New("process function is nil")
+	}
+	task, taskID, err := tq.GetOldest(ctx)
+	if err != nil {
+		return err
+	}
+	if task.IsZero() || taskID == "" {
+		tq.logger.Info("no pending task")
+		return nil
+	}
+	if err = fn(ctx, task.Message); err != nil {
+		return err
+	}
+	return tq.Delete(ctx, taskID)
+}
+
 func (tq *AsynqTaskQueue[T]) mapToTask(taskInfo *asynq.TaskInfo) (task.Task[T], error) {
 	if taskInfo == nil {
 		return task.Task[T]{}, eris.New("task info is nil")
