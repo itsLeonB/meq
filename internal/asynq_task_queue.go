@@ -7,7 +7,7 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/itsLeonB/ezutil/v2"
 	"github.com/itsLeonB/meq/task"
-	"github.com/rotisserie/eris"
+	"github.com/itsLeonB/ungerr"
 )
 
 type AsynqTaskQueue[T task.Message] struct {
@@ -42,14 +42,14 @@ func (tq *AsynqTaskQueue[T]) Enqueue(ctx context.Context, source string, message
 
 	payload, err := json.Marshal(t)
 	if err != nil {
-		return eris.Wrap(err, "error marshaling task")
+		return ungerr.Wrap(err, "error marshaling task")
 	}
 
 	asynqTask := asynq.NewTask(t.Type, payload)
 
 	info, err := tq.client.EnqueueContext(ctx, asynqTask, asynq.Queue(t.Type))
 	if err != nil {
-		return eris.Wrap(err, "error enqueuing task")
+		return ungerr.Wrap(err, "error enqueuing task")
 	}
 
 	tq.logger.Infof("enqueued task: ID=%s, Queue=%s", info.ID, info.Queue)
@@ -60,14 +60,14 @@ func (tq *AsynqTaskQueue[T]) Enqueue(ctx context.Context, source string, message
 func (tq *AsynqTaskQueue[T]) GetAllPending(ctx context.Context) ([]task.Task[T], error) {
 	pendingTasks, err := tq.inspector.ListPendingTasks(tq.queueName, asynq.PageSize(1000))
 	if err != nil {
-		return nil, eris.Wrap(err, "error listing pending tasks")
+		return nil, ungerr.Wrap(err, "error listing pending tasks")
 	}
 	return ezutil.MapSliceWithError(pendingTasks, tq.mapToTask)
 }
 
 func (tq *AsynqTaskQueue[T]) DeleteAll(ctx context.Context) error {
 	if err := tq.inspector.DeleteQueue(tq.queueName, true); err != nil {
-		return eris.Wrap(err, "error deleting queue")
+		return ungerr.Wrap(err, "error deleting queue")
 	}
 	return nil
 }
@@ -79,7 +79,7 @@ func (tq *AsynqTaskQueue[T]) GetOldest(ctx context.Context) (task.Task[T], strin
 	)
 
 	if err != nil {
-		return task.Task[T]{}, "", eris.Wrap(err, "error listing pending tasks")
+		return task.Task[T]{}, "", ungerr.Wrap(err, "error listing pending tasks")
 	}
 
 	if len(tasks) < 1 {
@@ -99,17 +99,17 @@ func (tq *AsynqTaskQueue[T]) GetOldest(ctx context.Context) (task.Task[T], strin
 
 func (tq *AsynqTaskQueue[T]) Delete(ctx context.Context, id string) error {
 	if id == "" {
-		return eris.New("id is empty")
+		return ungerr.Unknown("id is empty")
 	}
 	if err := tq.inspector.DeleteTask(tq.queueName, id); err != nil {
-		return eris.Wrapf(err, "error deleting task id %s", id)
+		return ungerr.Wrapf(err, "error deleting task id %s", id)
 	}
 	return nil
 }
 
 func (tq *AsynqTaskQueue[T]) ProcessAndAckOldest(ctx context.Context, fn func(context.Context, T) error) error {
 	if fn == nil {
-		return eris.New("process function is nil")
+		return ungerr.Unknown("process function is nil")
 	}
 	task, taskID, err := tq.GetOldest(ctx)
 	if err != nil {
@@ -131,12 +131,12 @@ func (tq *AsynqTaskQueue[T]) ProcessAndAckOldest(ctx context.Context, fn func(co
 
 func (tq *AsynqTaskQueue[T]) mapToTask(taskInfo *asynq.TaskInfo) (task.Task[T], error) {
 	if taskInfo == nil {
-		return task.Task[T]{}, eris.New("task info is nil")
+		return task.Task[T]{}, ungerr.Unknown("task info is nil")
 	}
 
 	var payload task.Task[T]
 	if err := json.Unmarshal(taskInfo.Payload, &payload); err != nil {
-		return task.Task[T]{}, eris.Wrap(err, "error unmarshal to task")
+		return task.Task[T]{}, ungerr.Wrap(err, "error unmarshal to task")
 	}
 
 	return payload, nil
